@@ -19,7 +19,6 @@ mysql = MySQL(app)
 Articles = Articles()
 
 @app.route('/')
-
 def index():
     return render_template('home.html')
 
@@ -34,6 +33,10 @@ def articles():
 @app.route('/article/<string:id>/')
 def article(id):
     return render_template('article.html', id=id)
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 class RegisterForm(Form):
     name = StringField('Name', [validators.Length(min=1,max=50)])
