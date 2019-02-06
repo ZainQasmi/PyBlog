@@ -126,6 +126,7 @@ def is_user_logged_in(f):
 
 # Logout
 @app.route('/logout')
+@is_user_logged_in
 def logout():
 	session.clear()
 	flash('You are now logged out','success')
@@ -136,6 +137,36 @@ def logout():
 @is_user_logged_in
 def dashboard():
 	return render_template('dashboard.html')
+
+# Article Form Class
+class ArticleForm(Form):
+	title = StringField('Title', [validators.Length(min=1, max=280)])
+	body = TextAreaField('Body', [validators.Length(min=30)])
+
+# Add Article
+@app.route('/add_article', methods=['GET','POST'])
+@is_user_logged_in
+def add_article():
+	form = ArticleForm(request.form)
+	if request.method == 'POST' and form.validate():
+		title = form.title.data
+		body = form.body.data
+
+		# Create Cursor
+		cur = mysql.connection.cursor()
+
+		# Execute Query
+		cur.execute("INSERT INTO articles(title, body, author) VALUES(%s, %s, %s)", (title, body, session['username']))
+
+		# Commit to DB
+		mysql.connection.commit()
+
+		# Close connection
+		cur.close()
+
+		flash('Article Created', 'success')
+		return redirect(url_for('dashboard'))
+	return render_template('add_article.html', form=form)
 
 if __name__ == '__main__':
 	app.secret_key='secret123'
