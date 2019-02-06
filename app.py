@@ -164,7 +164,9 @@ def dashboard():
 	cur = mysql.connection.cursor()
 
 	# Get Articles
-	result = cur.execute("SELECT * FROM articles")
+	result = cur.execute("SELECT * FROM articles WHERE author = %s", [session['username']])
+	# result = cur.execute("SELECT * FROM articles")
+	
 	
 	articles = cur.fetchall()
 
