@@ -1,5 +1,5 @@
 from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
-from data import Articles
+# from data import Articles
 from flask_mysqldb import MySQL
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
@@ -17,7 +17,7 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 # Initialize MySQL
 mysql = MySQL(app)
 
-Articles = Articles()
+# Articles = Articles()
 
 # Index
 @app.route('/')
@@ -32,12 +32,36 @@ def about():
 # Articles
 @app.route('/articles')
 def articles():
-	return render_template('articles.html', articles = Articles)
+	# Create Cursor
+	cur = mysql.connection.cursor()
+
+	# Get Articles
+	result = cur.execute("SELECT * FROM articles")
+
+	articles = cur.fetchall()
+
+	if result > 0:
+		return render_template('articles.html', articles=articles)
+	else:
+		msg = "No articles found"
+		return render_template('articles.html', msg=msg)
+
+	# Close Connections
+	cur.close() 
+	# return render_template('dashboard.html')
 
 # Single Article
 @app.route('/article/<string:id>/')
 def article(id):
-	return render_template('article.html', id=id)
+	# Create Cursor
+	cur = mysql.connection.cursor()
+
+	# Get Articles  ?? RESULT ??
+	result = cur.execute("SELECT * FROM articles WHERE id=%s",[id])
+
+	article = cur.fetchone()
+
+	return render_template('article.html', article=article)
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -136,7 +160,25 @@ def logout():
 @app.route('/dashboard')
 @is_user_logged_in
 def dashboard():
-	return render_template('dashboard.html')
+	# Create Cursor
+	cur = mysql.connection.cursor()
+
+	# Get Articles
+	result = cur.execute("SELECT * FROM articles")
+	
+	articles = cur.fetchall()
+
+	# Close Connections
+	cur.close()
+	
+	if result>0:
+		return render_template('dashboard.html', articles=articles)
+	else:
+		msg = "No articles found"
+		return render_template('dashboard.html', msg=msg)
+
+	
+	# return render_template('dashboard.html')
 
 # Article Form Class
 class ArticleForm(Form):
