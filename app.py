@@ -177,7 +177,6 @@ def dashboard():
 		msg = "No articles found"
 		return render_template('dashboard.html', msg=msg)
 	
-	# return render_template('dashboard.html')
 
 # Article Form Class
 class ArticleForm(Form):
