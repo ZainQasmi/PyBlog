@@ -8,11 +8,19 @@ from functools import wraps
 app = Flask(__name__)
 
 # Config MySQL
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_HOST'] = '35.236.72.247'
+app.config['MYSQL_USER'] = 'sampleuser'
 app.config['MYSQL_PASSWORD'] = 'assassin47'
 app.config['MYSQL_DB'] = 'myFlaskApp'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+
+
+# # Config MySQL
+# app.config['MYSQL_HOST'] = 'localhost'
+# app.config['MYSQL_USER'] = 'root'
+# app.config['MYSQL_PASSWORD'] = 'assassin47'
+# app.config['MYSQL_DB'] = 'myFlaskApp'
+# app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 # Initialize MySQL
 mysql = MySQL(app)
