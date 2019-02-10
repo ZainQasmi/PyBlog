@@ -1,6 +1,6 @@
 from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
 # from data import Articles
-from flask_mysqldb import MySQL
+# from flask_mysqldb import MySQL
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
@@ -15,7 +15,6 @@ app.config['MYSQL_PASSWORD'] = 'assassin47'
 app.config['MYSQL_DB'] = 'myFlaskApp'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
-
 # # Config MySQL
 # app.config['MYSQL_HOST'] = 'localhost'
 # app.config['MYSQL_USER'] = 'root'
@@ -24,7 +23,7 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 # app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 # Initialize MySQL
-mysql = MySQL(app)
+# mysql = MySQL(app)
 
 # Articles = Articles()
 

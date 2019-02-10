@@ -5,8 +5,8 @@ threadsafe: true
 libraries:
 - name: ssl
   version: latest
-# - name: MySQLdb
-  # version: latest
+- name: MySQLdb
+  version: "latest"
 
 # [START handlers]
 handlers:

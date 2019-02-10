@@ -2,15 +2,5 @@ Flask==1.0.2
 mysqlclient==1.4.1
 Flask-MySQLdb==0.2.0
 Flask-WTF==0.14.2
-mysqlclient==1.4.1
 passlib==1.7.1
-pathlib2==2.3.0
-virtualenv==16.3.0
-WTForms==2.2.1
-python-dateutil>=2.5.3
-pyasn1>=0.1.7
-rsa>=3.1.4
-click>=5.1
-jinja2>=2.10
-pyyaml>=3.12
-websocket-client<=0.40.0,>=0.32.0
+

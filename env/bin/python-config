@@ -1,4 +1,4 @@
-#!/Users/zq/Desktop/Python-Flask/env/bin/python
+#!/home/zainqasmi/Desktop/Python-Flask/env/bin/python
 
 import sys
 import getopt
