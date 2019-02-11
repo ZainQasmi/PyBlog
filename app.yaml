@@ -6,7 +6,7 @@ libraries:
 - name: ssl
   version: latest
 - name: MySQLdb
-  version: "latest"
+  version: latest
 
 # [START handlers]
 handlers:
@@ -16,3 +16,5 @@ handlers:
   script: main.app
 # [END handlers]
 
+beta_settings:
+  cloud_sql_instances: lookingbus5:us-west2:sql-instance-5

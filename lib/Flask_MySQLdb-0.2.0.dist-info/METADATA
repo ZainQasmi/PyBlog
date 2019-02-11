@@ -19,7 +19,6 @@ Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Requires-Dist: Flask (>=0.10)
 Requires-Dist: mysqlclient
 
-
 Flask-MySQLdb
 ----------------
 
