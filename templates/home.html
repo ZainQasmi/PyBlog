@@ -4,5 +4,9 @@
     <div class="jumbotron text-center">
         <h1>Welcome to My Flask App</h1>
         <p class="lead"> This is just a test application. Move on </p>
+        {% if session.logged_in == NULL %}
+            <a href="/register" class="btn btn-primary btn-lg">Register</a>
+            <a href="/login" class="btn btn-success btn-lg">Login</a>
+        {% endif %}
     </div>
 {% endblock %}
