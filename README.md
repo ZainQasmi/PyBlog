@@ -4,20 +4,20 @@ Beacuse life is short, use Python
 
 ### Prerequisites
 
-Python 2.7.15
+* Python 2.7.15
 
-Install packages in requirements.txt
+* Install packages in requirements.txt
 ```
 pip install -r requirements.txt
 ```
 
-Configure cloud_sql_instance name in app.yaml:
+* Configure cloud_sql_instance name in app.yaml:
 ```
 beta_settings:
   cloud_sql_instances: project-name:region-name:instance-name
 ```
 
-Configure database credentials:
+* Configure database credentials:
 ```
 app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/project-name:region-name:instance-name"
 app.config['MYSQL_USER'] = database username
@@ -27,7 +27,7 @@ app.config['MYSQL_DB'] = database name
 
 ## Getting Started
 
-To run on localhost:
+### To run on localhost:
     
 * Comment out line 13 in main.py
     ```
@@ -42,12 +42,13 @@ To run on localhost:
     python main.py
     ```
 
-To deploy on gcloud app engine:
+### To deploy on gcloud app engine:
 * Run
     ```
     gcloud app deploy
     ```
-To enable login via Facebook or Google:
+### To enable login via Facebook or Google:
+
     ```
     app.config["GOOGLE_OAUTH_CLIENT_ID"] = Add google client API key
     app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = Add google client secret API key
