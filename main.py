@@ -23,7 +23,6 @@ os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 app.config["GOOGLE_OAUTH_CLIENT_ID"] = "283066370676-hfor9ujdvrkv2moodocalf7sq349ha8t.apps.googleusercontent.com"
 app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = "_amEDr0pZFUNwHbtl24xzsXH"
 google_bp = make_google_blueprint(scope=['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'])
-# google_bp = make_google_blueprint(scope=["profile", "email"])
 app.register_blueprint(google_bp, url_prefix="/login")
 
 app.config["FACEBOOK_OAUTH_CLIENT_ID"] = "580284412451595"
@@ -32,16 +31,6 @@ facebook_bp = make_facebook_blueprint(scope=['email'],rerequest_declined_permiss
 app.register_blueprint(facebook_bp, url_prefix="/login")
 
 # Config MySQL
-# LOOKINGBUS5 - lookingbus5:us-west2:sql-instance-5
-# app.config['MYSQL_HOST'] = '35.235.124.24'
-# app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus5:us-west2:sql-instance-5"
-# app.config['MYSQL_USER'] = 'zain-alpha'
-# app.config['MYSQL_PASSWORD'] = 'assassin47'
-# app.config['MYSQL_DB'] = 'lk5'
-# app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
-
-# Config MySQL
-# LOOKINGBUS5 - lookingbus-alpha:us-west2:sql-instance-alpha
 # app.config['MYSQL_HOST'] = '35.236.99.107'
 app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus-alpha:us-west2:sql-instance-alpha"
 app.config['MYSQL_USER'] = 'zain-alpha'
@@ -49,19 +38,8 @@ app.config['MYSQL_PASSWORD'] = 'assassin47'
 app.config['MYSQL_DB'] = 'alphaDB'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
-# Config MySQL
-# LOOKINGBUS5 - lookingbus2:us-west2:myflaskapp
-# app.config['MYSQL_HOST'] = '35.236.72.247'
-# app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus2:us-west2:myflaskapp"
-# app.config['MYSQL_USER'] = 'sampleuser'
-# app.config['MYSQL_PASSWORD'] = 'assassin47'
-# app.config['MYSQL_DB'] = 'myFlaskApp'
-# app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
-
 # Initialize MySQL
 mysql = MySQL(app)
-
-# Articles = Articles()
 
 # Index
 @app.route('/')
@@ -179,7 +157,6 @@ def login_google():
 		username = resp.json()["given_name"]
 		oauth_id = resp.json()["id"]
 		print resp.json()
-		# password = sha256_crypt.encrypt(str(form.password.data))
 		
 		# Create cursor
 		cur = mysql.connection.cursor()
@@ -244,9 +221,6 @@ def login_facebook():
 			flash('Successfully registered via Facebook','success')
 			return redirect(url_for('dashboard'))
 
-
-
-
 # Check if user logged in
 def is_user_logged_in(f):
 	@wraps(f)
@@ -277,7 +251,6 @@ def dashboard():
 	result = cur.execute("SELECT * FROM articles WHERE author = %s", [session['username']])
 	# result = cur.execute("SELECT * FROM articles")
 	
-	
 	articles = cur.fetchall()
 
 	# Close Connections
@@ -289,7 +262,6 @@ def dashboard():
 		msg = "No articles found"
 		return render_template('dashboard.html', msg=msg)
 	
-
 # Article Form Class
 class ArticleForm(Form):
 	title = StringField('Title', [validators.Length(min=1, max=280)])
