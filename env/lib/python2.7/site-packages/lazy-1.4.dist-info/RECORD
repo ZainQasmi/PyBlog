@@ -1,0 +1,15 @@
+lazy-1.4.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+lazy-1.4.dist-info/LICENSE,sha256=i6SJ2f7Pqr82n27kOU5onSGzE1R1MYmOKUIXP4d7_uI,1288
+lazy-1.4.dist-info/METADATA,sha256=ciHl1yR4r80vo2EAQY5_BeJZ6q2IBoF3hggsYJmBQyI,2875
+lazy-1.4.dist-info/RECORD,,
+lazy-1.4.dist-info/WHEEL,sha256=_wJFdOYk7i3xxT8ElOkUJvOdOvfNGbR9g-bf6UQT6sU,110
+lazy-1.4.dist-info/top_level.txt,sha256=hTq356TYilmWLCJCZwpSFF198YC0BuYOXFV03WRnzFo,5
+lazy-1.4.dist-info/zip-safe,sha256=AbpHGcgLb-kRsJGnwFEktk7uzpZOCcBY74-YBdrKVGs,1
+lazy/__init__.py,sha256=MidUYJddwdlSnAcFAqcsblN1g3o-lvIw-iB6K9cqH2U,86
+lazy/__init__.pyc,,
+lazy/lazy.py,sha256=7XfyRkb92Sm-yNnhOVuJzr3KMwEgApqIP9sak6EI7Sw,1566
+lazy/lazy.pyc,,
+lazy/tests/__init__.py,sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0
+lazy/tests/__init__.pyc,,
+lazy/tests/test_lazy.py,sha256=WhWhfXbLZjCbM6oer_NwnWilAKZtItjXEkEfzSkVmo4,16398
+lazy/tests/test_lazy.pyc,,

@@ -5,13 +5,30 @@ from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
 
+from werkzeug.contrib.fixers import ProxyFix
+from flask import Flask, redirect, url_for
+from flask_dance.contrib.google import make_google_blueprint, google
+from raven.contrib.flask import Sentry
+
+
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret123'
 
+import os
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+
+app.wsgi_app = ProxyFix(app.wsgi_app)
+app.config["GOOGLE_OAUTH_CLIENT_ID"] = "283066370676-hfor9ujdvrkv2moodocalf7sq349ha8t.apps.googleusercontent.com"
+app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = "_amEDr0pZFUNwHbtl24xzsXH"
+google_bp = make_google_blueprint(scope=["profile", "email"])
+app.register_blueprint(google_bp, url_prefix="/login")
+
 # Config MySQL
 # lookingbus5:us-west2:sql-instance-5
-# app.config['MYSQL_HOST'] = '35.235.124.24'
-app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus5:us-west2:sql-instance-5"
+app.config['MYSQL_HOST'] = '35.235.124.24'
+# app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus5:us-west2:sql-instance-5"
 app.config['MYSQL_USER'] = 'zaindb'
 app.config['MYSQL_PASSWORD'] = 'assassin47'
 app.config['MYSQL_DB'] = 'lk5'
@@ -140,6 +157,45 @@ def login():
 
 	return render_template('login.html')
 
+# User Login Google
+@app.route('/login_google', methods=['GET', 'POST'])
+def login_google():
+	if not google.authorized:
+		return redirect(url_for("google.login"))
+	resp = google.get("/oauth2/v1/userinfo")
+	if resp.ok and resp.text:
+		name = resp.json()["name"]
+		email = resp.json()["email"]
+		username = resp.json()["given_name"]
+		# password = sha256_crypt.encrypt(str(form.password.data))
+		
+		# Create cursor
+		cur = mysql.connection.cursor()
+		# Get user by email
+		result = cur.execute("SELECT * FROM users WHERE email =%s", [email])
+		if result>0:
+			print "HERE"
+			# data = cur.fetchone()
+			session['logged_in'] = True
+			session['username'] = username
+			flash('You are now logged in','success')
+			# Close connection
+			cur.close()
+			return redirect(url_for('dashboard'))
+		else:
+			# Execute Query
+			cur.execute("INSERT INTO users(name, email, username) VALUES(%s, %s, %s)", (name, email, username))
+			# Commit to DB
+			mysql.connection.commit()
+			# Close connection
+			cur.close()
+
+			session['logged_in'] = True
+			session['username'] = username
+			flash('You are now logged in','success')
+			return redirect(url_for('dashboard'))
+	
+
 # Check if user logged in
 def is_user_logged_in(f):
 	@wraps(f)
@@ -153,7 +209,7 @@ def is_user_logged_in(f):
 
 # Logout
 @app.route('/logout')
-@is_user_logged_in
+# @is_user_logged_in
 def logout():
 	session.clear()
 	flash('You are now logged out','success')
