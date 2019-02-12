@@ -5,8 +5,6 @@ threadsafe: true
 libraries:
 - name: ssl
   version: latest
-- name: MySQLdb
-  version: latest
 
 # [START handlers]
 handlers:
@@ -17,4 +15,4 @@ handlers:
 # [END handlers]
 
 beta_settings:
-  cloud_sql_instances: lookingbus5:us-west2:sql-instance-5
+  cloud_sql_instances: lookingbus-alpha:us-west2:sql-instance-alpha

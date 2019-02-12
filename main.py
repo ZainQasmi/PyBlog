@@ -1,5 +1,4 @@
 from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
-# from data import Articles
 from flask_mysqldb import MySQL
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
@@ -8,30 +7,43 @@ from functools import wraps
 from werkzeug.contrib.fixers import ProxyFix
 from flask import Flask, redirect, url_for
 from flask_dance.contrib.google import make_google_blueprint, google
+from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
 from raven.contrib.flask import Sentry
-
-
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret123'
+app.wsgi_app = ProxyFix(app.wsgi_app)
 
 import os
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
-app.wsgi_app = ProxyFix(app.wsgi_app)
 app.config["GOOGLE_OAUTH_CLIENT_ID"] = "283066370676-hfor9ujdvrkv2moodocalf7sq349ha8t.apps.googleusercontent.com"
 app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = "_amEDr0pZFUNwHbtl24xzsXH"
 google_bp = make_google_blueprint(scope=["profile", "email"])
 app.register_blueprint(google_bp, url_prefix="/login")
 
+app.config["FACEBOOK_OAUTH_CLIENT_ID"] = "580284412451595"
+app.config["FACEBOOK_OAUTH_CLIENT_SECRET"] = "b186f8a61e42641f50605f4c2e94e2ff"
+facebook_bp = make_facebook_blueprint(scope=['email','user_birthday'],rerequest_declined_permissions=True)
+app.register_blueprint(facebook_bp, url_prefix="/login")
+
 # Config MySQL
-# lookingbus5:us-west2:sql-instance-5
-app.config['MYSQL_HOST'] = '35.235.124.24'
+# LOOKINGBUS5 - lookingbus5:us-west2:sql-instance-5
+# app.config['MYSQL_HOST'] = '35.235.124.24'
 # app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus5:us-west2:sql-instance-5"
-app.config['MYSQL_USER'] = 'zaindb'
+# app.config['MYSQL_USER'] = 'zain-alpha'
+# app.config['MYSQL_PASSWORD'] = 'assassin47'
+# app.config['MYSQL_DB'] = 'lk5'
+# app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+
+# Config MySQL
+# LOOKINGBUS5 - lookingbus-alpha:us-west2:sql-instance-alpha
+# app.config['MYSQL_HOST'] = '35.236.99.107'
+app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus-alpha:us-west2:sql-instance-alpha"
+app.config['MYSQL_USER'] = 'zain-alpha'
 app.config['MYSQL_PASSWORD'] = 'assassin47'
-app.config['MYSQL_DB'] = 'lk5'
+app.config['MYSQL_DB'] = 'alphaDB'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 # Initialize MySQL
@@ -54,18 +66,14 @@ def about():
 def articles():
 	# Create Cursor
 	cur = mysql.connection.cursor()
-
 	# Get Articles
 	result = cur.execute("SELECT * FROM articles")
-
 	articles = cur.fetchall()
-
 	if result > 0:
 		return render_template('articles.html', articles=articles)
 	else:
 		msg = "No articles found"
 		return render_template('articles.html', msg=msg)
-
 	# Close Connections
 	cur.close() 
 	# return render_template('dashboard.html')
@@ -75,12 +83,9 @@ def articles():
 def article(id):
 	# Create Cursor
 	cur = mysql.connection.cursor()
-
 	# Get Articles  ?? RESULT ??
 	result = cur.execute("SELECT * FROM articles WHERE id=%s",[id])
-
 	article = cur.fetchone()
-
 	return render_template('article.html', article=article)
 
 @app.errorhandler(404)
@@ -115,7 +120,6 @@ def register():
 		mysql.connection.commit()
 		# Close connection
 		cur.close()
-
 		flash('You are registered and can log in', 'Success!')
 		return redirect(url_for('index'))
 	return render_template('register.html', form=form)
@@ -127,18 +131,14 @@ def login():
 		# Get Form Fields
 		username = request.form['username']
 		password_candidate = request.form['password']
-
 		# Create cursor
 		cur = mysql.connection.cursor()
-
 		# Get user by username
 		result = cur.execute("SELECT * FROM users WHERE username =%s", [username])
-		
 		if result > 0:
 			# Get stored hash
 			data = cur.fetchone()
 			password = data['password']
-
 			# Compare Passwords
 			if sha256_crypt.verify(password_candidate, password):
 				session['logged_in'] = True
@@ -148,13 +148,11 @@ def login():
 			else:
 				error = 'Invalid Password'
 				return render_template('login.html', error=error)
-			
 			# Close Connection
 			cur.close()
 		else:
 			error = 'Username is not found'
 			return render_template('login.html', error=error)
-
 	return render_template('login.html')
 
 # User Login Google
@@ -167,24 +165,25 @@ def login_google():
 		name = resp.json()["name"]
 		email = resp.json()["email"]
 		username = resp.json()["given_name"]
+		oauth_id = resp.json()["id"]
+		print resp.json()
 		# password = sha256_crypt.encrypt(str(form.password.data))
 		
 		# Create cursor
 		cur = mysql.connection.cursor()
 		# Get user by email
-		result = cur.execute("SELECT * FROM users WHERE email =%s", [email])
+		result = cur.execute("SELECT * FROM users WHERE email =%s AND oauth_id =%s", [email,oauth_id])
 		if result>0:
-			print "HERE"
 			# data = cur.fetchone()
 			session['logged_in'] = True
 			session['username'] = username
-			flash('You are now logged in','success')
 			# Close connection
 			cur.close()
+			flash('You are now logged in via Google','success')
 			return redirect(url_for('dashboard'))
 		else:
 			# Execute Query
-			cur.execute("INSERT INTO users(name, email, username) VALUES(%s, %s, %s)", (name, email, username))
+			cur.execute("INSERT INTO users(name, email, username, oauth_id) VALUES(%s, %s, %s, %s)", (name, email, username, oauth_id))
 			# Commit to DB
 			mysql.connection.commit()
 			# Close connection
@@ -192,9 +191,49 @@ def login_google():
 
 			session['logged_in'] = True
 			session['username'] = username
-			flash('You are now logged in','success')
+			flash('Successfully registered via Google','success')
 			return redirect(url_for('dashboard'))
-	
+
+# User Login Facebook
+@app.route('/login_facebook', methods=['GET', 'POST'])
+def login_facebook():
+	if not facebook.authorized:
+		return redirect(url_for("facebook.login"))
+	resp = facebook.get("me?fields=id,name,email,first_name,short_name")
+	if resp.ok:
+		name = resp.json()["name"]
+		email = resp.json()["email"]
+		username = resp.json()["short_name"]
+		oauth_id = resp.json()["id"]
+		
+		# Create cursor
+		cur = mysql.connection.cursor()
+		# Get user by email
+		result = cur.execute("SELECT * FROM users WHERE email =%s AND oauth_id=%s", [email,oauth_id])
+		if result>0:
+			print "THIS WORKSSSSSSSSSSSSSSSS"
+			# data = cur.fetchone()
+			session['logged_in'] = True
+			session['username'] = username
+			# Close connection
+			cur.close()
+			flash('You are now logged in via Facebook','success')
+			return redirect(url_for('dashboard'))
+		else:
+			# Execute Query
+			cur.execute("INSERT INTO users(name, email, username, oauth_id) VALUES(%s, %s, %s, %s)", (name, email, username, oauth_id))
+			# Commit to DB
+			mysql.connection.commit()
+			# Close connection
+			cur.close()
+
+			session['logged_in'] = True
+			session['username'] = username
+			flash('Successfully registered via Facebook','success')
+			return redirect(url_for('dashboard'))
+
+
+
 
 # Check if user logged in
 def is_user_logged_in(f):
