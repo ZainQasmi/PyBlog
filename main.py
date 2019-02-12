@@ -1,30 +1,33 @@
+import os
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+
 from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
 from flask_mysqldb import MySQL
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
-
 from werkzeug.contrib.fixers import ProxyFix
 from flask import Flask, redirect, url_for
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
 from raven.contrib.flask import Sentry
 from requests_toolbelt.adapters import appengine
+
 appengine.monkeypatch()
 
+# Init App
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret123'
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
-import os
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
-
+# Config Google
 app.config["GOOGLE_OAUTH_CLIENT_ID"] = "283066370676-hfor9ujdvrkv2moodocalf7sq349ha8t.apps.googleusercontent.com"
 app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = "_amEDr0pZFUNwHbtl24xzsXH"
 google_bp = make_google_blueprint(scope=['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'])
 app.register_blueprint(google_bp, url_prefix="/login")
 
+# Config Facebook
 app.config["FACEBOOK_OAUTH_CLIENT_ID"] = "580284412451595"
 app.config["FACEBOOK_OAUTH_CLIENT_SECRET"] = "b186f8a61e42641f50605f4c2e94e2ff"
 facebook_bp = make_facebook_blueprint(scope=['email'],rerequest_declined_permissions=True)
@@ -38,7 +41,6 @@ app.config['MYSQL_PASSWORD'] = 'assassin47'
 app.config['MYSQL_DB'] = 'alphaDB'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
-# Initialize MySQL
 mysql = MySQL(app)
 
 # Index
