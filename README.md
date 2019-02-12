@@ -29,21 +29,21 @@ app.config['MYSQL_DB'] = database name
 
 To run on localhost:
     
-    * Comment out line 13 in main.py
+* Comment out line 13 in main.py
     ```
     appengine.monkeypatch()
     ```
-    * Configure SQL connection:
+* Configure SQL connection:
     ```
     app.config['MYSQL_HOST'] = localhost
     ```
-    * Run
+* Run
     ```
     python main.py
     ```
 
 To deploy on gcloud app engine:
-    * Run
+* Run
     ```
     gcloud app deploy
     ```
