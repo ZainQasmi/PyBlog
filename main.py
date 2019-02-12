@@ -28,7 +28,7 @@ app.register_blueprint(google_bp, url_prefix="/login")
 
 app.config["FACEBOOK_OAUTH_CLIENT_ID"] = "580284412451595"
 app.config["FACEBOOK_OAUTH_CLIENT_SECRET"] = "b186f8a61e42641f50605f4c2e94e2ff"
-facebook_bp = make_facebook_blueprint(scope=['email','user_birthday'],rerequest_declined_permissions=True)
+facebook_bp = make_facebook_blueprint(scope=['email'],rerequest_declined_permissions=True)
 app.register_blueprint(facebook_bp, url_prefix="/login")
 
 # Config MySQL
