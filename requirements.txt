@@ -4,3 +4,8 @@ mysqlclient==1.4.1
 Flask-MySQLdb==0.2.0
 Flask-WTF==0.14.2
 passlib==1.7.1
+flask-dance
+gunicorn
+raven
+blinker
+requests-toolbelt
