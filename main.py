@@ -40,10 +40,19 @@ app.register_blueprint(facebook_bp, url_prefix="/login")
 # Config MySQL
 # LOOKINGBUS5 - lookingbus-alpha:us-west2:sql-instance-alpha
 # app.config['MYSQL_HOST'] = '35.236.99.107'
-app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus-alpha:us-west2:sql-instance-alpha"
-app.config['MYSQL_USER'] = 'zain-alpha'
+# app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus-alpha:us-west2:sql-instance-alpha"
+# app.config['MYSQL_USER'] = 'zain-alpha'
+# app.config['MYSQL_PASSWORD'] = 'assassin47'
+# app.config['MYSQL_DB'] = 'alphaDB'
+# app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+
+# Config MySQL
+# LOOKINGBUS5 - lookingbus2:us-west2:myflaskapp
+# app.config['MYSQL_HOST'] = '35.236.72.247'
+app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus2:us-west2:myflaskapp"
+app.config['MYSQL_USER'] = 'sampleuser'
 app.config['MYSQL_PASSWORD'] = 'assassin47'
-app.config['MYSQL_DB'] = 'alphaDB'
+app.config['MYSQL_DB'] = 'myFlaskApp'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 # Initialize MySQL
