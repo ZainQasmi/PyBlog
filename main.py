@@ -9,6 +9,8 @@ from flask import Flask, redirect, url_for
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
 from raven.contrib.flask import Sentry
+from requests_toolbelt.adapters import appengine
+appengine.monkeypatch()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret123'
@@ -20,7 +22,8 @@ os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 app.config["GOOGLE_OAUTH_CLIENT_ID"] = "283066370676-hfor9ujdvrkv2moodocalf7sq349ha8t.apps.googleusercontent.com"
 app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = "_amEDr0pZFUNwHbtl24xzsXH"
-google_bp = make_google_blueprint(scope=["profile", "email"])
+google_bp = make_google_blueprint(scope=['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'])
+# google_bp = make_google_blueprint(scope=["profile", "email"])
 app.register_blueprint(google_bp, url_prefix="/login")
 
 app.config["FACEBOOK_OAUTH_CLIENT_ID"] = "580284412451595"
@@ -40,20 +43,20 @@ app.register_blueprint(facebook_bp, url_prefix="/login")
 # Config MySQL
 # LOOKINGBUS5 - lookingbus-alpha:us-west2:sql-instance-alpha
 # app.config['MYSQL_HOST'] = '35.236.99.107'
-# app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus-alpha:us-west2:sql-instance-alpha"
-# app.config['MYSQL_USER'] = 'zain-alpha'
-# app.config['MYSQL_PASSWORD'] = 'assassin47'
-# app.config['MYSQL_DB'] = 'alphaDB'
-# app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus-alpha:us-west2:sql-instance-alpha"
+app.config['MYSQL_USER'] = 'zain-alpha'
+app.config['MYSQL_PASSWORD'] = 'assassin47'
+app.config['MYSQL_DB'] = 'alphaDB'
+app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 # Config MySQL
 # LOOKINGBUS5 - lookingbus2:us-west2:myflaskapp
 # app.config['MYSQL_HOST'] = '35.236.72.247'
-app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus2:us-west2:myflaskapp"
-app.config['MYSQL_USER'] = 'sampleuser'
-app.config['MYSQL_PASSWORD'] = 'assassin47'
-app.config['MYSQL_DB'] = 'myFlaskApp'
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+# app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus2:us-west2:myflaskapp"
+# app.config['MYSQL_USER'] = 'sampleuser'
+# app.config['MYSQL_PASSWORD'] = 'assassin47'
+# app.config['MYSQL_DB'] = 'myFlaskApp'
+# app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 # Initialize MySQL
 mysql = MySQL(app)

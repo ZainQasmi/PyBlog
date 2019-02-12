@@ -17,5 +17,5 @@ handlers:
 # [END handlers]
 
 beta_settings:
-  cloud_sql_instances: lookingbus2:us-west2:myflaskapp
-  # cloud_sql_instances: lookingbus-alpha:us-west2:sql-instance-alpha
+  cloud_sql_instances: lookingbus-alpha:us-west2:sql-instance-alpha
+  # cloud_sql_instances: lookingbus2:us-west2:myflaskapp

@@ -8,3 +8,4 @@ flask-dance
 gunicorn
 raven
 blinker
+requests-toolbelt
