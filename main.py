@@ -23,20 +23,28 @@ app.config['SECRET_KEY'] = 'secret123'
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
 # Config Google
-app.config["GOOGLE_OAUTH_CLIENT_ID"] = "283066370676-hfor9ujdvrkv2moodocalf7sq349ha8t.apps.googleusercontent.com"
-app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = "_amEDr0pZFUNwHbtl24xzsXH"
+
+app.config["GOOGLE_OAUTH_CLIENT_ID"] = "719592336073-5ikc81fl9046o12kbgjdotb6lseof4g1.apps.googleusercontent.com" #-dot-prod
+app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = "ADhyYTRjVKwon096B_c56hNn" #-dot-prod
+
+# app.config["GOOGLE_OAUTH_CLIENT_ID"] = "283066370676-hfor9ujdvrkv2moodocalf7sq349ha8t.apps.googleusercontent.com"
+# app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = "_amEDr0pZFUNwHbtl24xzsXH"
+
 google_bp = make_google_blueprint(scope=['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'])
 app.register_blueprint(google_bp, url_prefix="/login")
 
 # Config Facebook
-app.config["FACEBOOK_OAUTH_CLIENT_ID"] = "580284412451595"
-app.config["FACEBOOK_OAUTH_CLIENT_SECRET"] = "b186f8a61e42641f50605f4c2e94e2ff"
+app.config["FACEBOOK_OAUTH_CLIENT_ID"] = "2315428118481060" #dot-prod
+app.config["FACEBOOK_OAUTH_CLIENT_SECRET"] = "29c8d34f705ed2c2241443bed2456266" #dot-prod
+# app.config["FACEBOOK_OAUTH_CLIENT_ID"] = "580284412451595"
+# app.config["FACEBOOK_OAUTH_CLIENT_SECRET"] = "b186f8a61e42641f50605f4c2e94e2ff"
 facebook_bp = make_facebook_blueprint(scope=['email'],rerequest_declined_permissions=True)
 app.register_blueprint(facebook_bp, url_prefix="/login")
 
 # Config MySQL
 # app.config['MYSQL_HOST'] = '35.236.99.107'
-app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus-alpha:us-west2:sql-instance-alpha"
+# app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus-alpha:us-west2:sql-instance-alpha"
+app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/dot-operating-authority:us-west2:dot-operating-instance"
 app.config['MYSQL_USER'] = 'zain-alpha'
 app.config['MYSQL_PASSWORD'] = 'assassin47'
 app.config['MYSQL_DB'] = 'alphaDB'
@@ -58,7 +66,8 @@ def check_recaptcha(f):
 
         if request.method == 'POST':
             data = {
-                'secret': '6Ld-6ZAUAAAAAInEsIaaCtwDzfc2qStbybnSboiz',
+                # 'secret': '6Ld-6ZAUAAAAAInEsIaaCtwDzfc2qStbybnSboiz',
+                'secret': '6LcwHJEUAAAAAECtSdouWqhV51QRPvbu37FbFE6q',
                 'response': request.form.get('g-recaptcha-response'),
                 'remoteip': request.access_route[0]
             }
