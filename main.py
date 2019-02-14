@@ -1,8 +1,4 @@
 import os, requests
-
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
-
 from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
 from flask_mysqldb import MySQL
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
@@ -15,40 +11,34 @@ from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
 from raven.contrib.flask import Sentry
 from requests_toolbelt.adapters import appengine
 
-appengine.monkeypatch()
-
 # Init App
+appengine.monkeypatch()
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret123'
+app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
 app.wsgi_app = ProxyFix(app.wsgi_app)
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = os.environ.get("OAUTHLIB_INSECURE_TRANSPORT")
+os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = os.environ.get("OAUTHLIB_RELAX_TOKEN_SCOPE")
 
-# Config Google
+# Config Google OAuth
 
-app.config["GOOGLE_OAUTH_CLIENT_ID"] = "719592336073-5ikc81fl9046o12kbgjdotb6lseof4g1.apps.googleusercontent.com" #-dot-prod
-app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = "ADhyYTRjVKwon096B_c56hNn" #-dot-prod
-
-# app.config["GOOGLE_OAUTH_CLIENT_ID"] = "283066370676-hfor9ujdvrkv2moodocalf7sq349ha8t.apps.googleusercontent.com"
-# app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = "_amEDr0pZFUNwHbtl24xzsXH"
-
+app.config["GOOGLE_OAUTH_CLIENT_ID"] = os.environ.get("GOOGLE_OAUTH_CLIENT_ID")
+app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET")
 google_bp = make_google_blueprint(scope=['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'])
 app.register_blueprint(google_bp, url_prefix="/login")
 
-# Config Facebook
-app.config["FACEBOOK_OAUTH_CLIENT_ID"] = "2315428118481060" #dot-prod
-app.config["FACEBOOK_OAUTH_CLIENT_SECRET"] = "29c8d34f705ed2c2241443bed2456266" #dot-prod
-# app.config["FACEBOOK_OAUTH_CLIENT_ID"] = "580284412451595"
-# app.config["FACEBOOK_OAUTH_CLIENT_SECRET"] = "b186f8a61e42641f50605f4c2e94e2ff"
+# Config Facebook OAuth
+app.config["FACEBOOK_OAUTH_CLIENT_ID"] = os.environ.get("FACEBOOK_OAUTH_CLIENT_ID")
+app.config["FACEBOOK_OAUTH_CLIENT_SECRET"] = os.environ.get("FACEBOOK_OAUTH_CLIENT_SECRET")
 facebook_bp = make_facebook_blueprint(scope=['email'],rerequest_declined_permissions=True)
 app.register_blueprint(facebook_bp, url_prefix="/login")
 
 # Config MySQL
-# app.config['MYSQL_HOST'] = '35.236.99.107'
-# app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/lookingbus-alpha:us-west2:sql-instance-alpha"
-app.config['MYSQL_UNIX_SOCKET'] = "/cloudsql/dot-operating-authority:us-west2:dot-operating-instance"
-app.config['MYSQL_USER'] = 'zain-alpha'
-app.config['MYSQL_PASSWORD'] = 'assassin47'
-app.config['MYSQL_DB'] = 'alphaDB'
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+app.config['MYSQL_HOST'] = os.environ.get("MYSQL_HOST")
+app.config['MYSQL_UNIX_SOCKET'] = os.environ.get("MYSQL_UNIX_SOCKET")
+app.config['MYSQL_USER'] = os.environ.get("MYSQL_USER")
+app.config['MYSQL_PASSWORD'] = os.environ.get("MYSQL_PASSWORD")
+app.config['MYSQL_DB'] = os.environ.get("MYSQL_DB")
+app.config['MYSQL_CURSORCLASS'] = os.environ.get("MYSQL_CURSORCLASS")
 
 mysql = MySQL(app)
 
@@ -66,8 +56,7 @@ def check_recaptcha(f):
 
         if request.method == 'POST':
             data = {
-                # 'secret': '6Ld-6ZAUAAAAAInEsIaaCtwDzfc2qStbybnSboiz',
-                'secret': '6LcwHJEUAAAAAECtSdouWqhV51QRPvbu37FbFE6q',
+                'secret': os.environ.get('RECAPTCHA_SECRET_KEY'),
                 'response': request.form.get('g-recaptcha-response'),
                 'remoteip': request.access_route[0]
             }
@@ -160,7 +149,7 @@ def register():
         cur.close()
         flash('You are registered and can log in', 'Success!')
         return redirect(url_for('index'))
-    return render_template('register.html', form=form)
+    return render_template('register.html', form=form, RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY"))
     
 # User Login
 @app.route('/login', methods=['GET', 'POST'])
@@ -192,7 +181,7 @@ def login():
         else:
             error = 'Username is not found'
             return render_template('login.html', error=error)
-    return render_template('login.html')
+    return render_template('login.html', RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY"))
 
 # User Login Google
 @app.route('/login_google', methods=['GET', 'POST'])

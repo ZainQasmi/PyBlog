@@ -20,3 +20,13 @@ beta_settings:
   cloud_sql_instances: dot-operating-authority:us-west2:dot-operating-instance
   # cloud_sql_instances: lookingbus-alpha:us-west2:sql-instance-alpha
   # cloud_sql_instances: lookingbus2:us-west2:myflaskapp
+
+env_variables:
+  SECRET_KEY: 'secret123'
+  OAUTHLIB_INSECURE_TRANSPORT: '1'
+  OAUTHLIB_RELAX_TOKEN_SCOPE: '1'
+
+includes:
+- credentials.yaml
+
+  

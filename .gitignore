@@ -1,0 +1,8 @@
+# Junk files
+.DS_Store
+
+# Python bytecode
+*.pyc
+
+# API KEYS & shizz
+credentials.yaml
