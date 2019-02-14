@@ -20,7 +20,7 @@
             {{render_field(form.confirm, class_="form-control")}}
         </div>
         <p><input type="submit" class="btn btn-primary" value="Submit"></p>
-        <div class="g-recaptcha" data-sitekey="6Ld-6ZAUAAAAAC-QfkYq8eBESZYMR_HLSN13-iRY"></div>
+        <div class="g-recaptcha" data-sitekey={{RECAPTCHA_SITE_KEY}}></div>
     </form>
     
 {% endblock %}
