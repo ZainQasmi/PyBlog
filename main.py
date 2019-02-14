@@ -1,4 +1,5 @@
 import os, requests
+
 from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
 from flask_mysqldb import MySQL
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
@@ -11,16 +12,16 @@ from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
 from raven.contrib.flask import Sentry
 from requests_toolbelt.adapters import appengine
 
+
 # Init App
 appengine.monkeypatch()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
 app.wsgi_app = ProxyFix(app.wsgi_app)
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = os.environ.get("OAUTHLIB_INSECURE_TRANSPORT")
-os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = os.environ.get("OAUTHLIB_RELAX_TOKEN_SCOPE")
+app.config['OAUTHLIB_INSECURE_TRANSPORT'] = os.environ.get("OAUTHLIB_INSECURE_TRANSPORT")
+app.config['OAUTHLIB_RELAX_TOKEN_SCOPE'] = os.environ.get("OAUTHLIB_RELAX_TOKEN_SCOPE")
 
 # Config Google OAuth
-
 app.config["GOOGLE_OAUTH_CLIENT_ID"] = os.environ.get("GOOGLE_OAUTH_CLIENT_ID")
 app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET")
 google_bp = make_google_blueprint(scope=['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'])
@@ -33,23 +34,17 @@ facebook_bp = make_facebook_blueprint(scope=['email'],rerequest_declined_permiss
 app.register_blueprint(facebook_bp, url_prefix="/login")
 
 # Config MySQL
-app.config['MYSQL_HOST'] = os.environ.get("MYSQL_HOST")
 app.config['MYSQL_UNIX_SOCKET'] = os.environ.get("MYSQL_UNIX_SOCKET")
 app.config['MYSQL_USER'] = os.environ.get("MYSQL_USER")
 app.config['MYSQL_PASSWORD'] = os.environ.get("MYSQL_PASSWORD")
 app.config['MYSQL_DB'] = os.environ.get("MYSQL_DB")
 app.config['MYSQL_CURSORCLASS'] = os.environ.get("MYSQL_CURSORCLASS")
+# app.config['MYSQL_HOST'] = os.environ.get("MYSQL_HOST")
 
 mysql = MySQL(app)
 
 # Google Recaptcha
 def check_recaptcha(f):
-    """
-    Checks Google  reCAPTCHA.
-
-    :param f: view function
-    :return: Function
-    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         request.recaptcha_is_valid = None
@@ -92,24 +87,27 @@ def about():
 def articles():
     # Create Cursor
     cur = mysql.connection.cursor()
+
     # Get Articles
     result = cur.execute("SELECT * FROM articles")
     articles = cur.fetchall()
+    
+    # Close Connections
+    cur.close() 
+
     if result > 0:
         return render_template('articles.html', articles=articles)
     else:
         msg = "No articles found"
         return render_template('articles.html', msg=msg)
-    # Close Connections
-    cur.close() 
-    # return render_template('dashboard.html')
-
+    
 # Single Article
 @app.route('/article/<string:id>/')
 def article(id):
     # Create Cursor
     cur = mysql.connection.cursor()
-    # Get Articles  ?? RESULT ??
+
+    # Get Articles
     result = cur.execute("SELECT * FROM articles WHERE id=%s",[id])
     article = cur.fetchone()
     return render_template('article.html', article=article)
@@ -134,21 +132,28 @@ class RegisterForm(Form):
 @check_recaptcha
 def register():
     form = RegisterForm(request.form)
+
     if request.method == 'POST' and form.validate() and request.recaptcha_is_valid:
         name = form.name.data
         email = form.email.data
         username = form.username.data
         password = sha256_crypt.encrypt(str(form.password.data))
+
         # Create cursor
         cur = mysql.connection.cursor()
+        
         # Execute Query
         cur.execute("INSERT INTO users(name, email, username, password) VALUES(%s, %s, %s, %s)", (name, email, username, password))
+        
         # Commit to DB
         mysql.connection.commit()
+        
         # Close connection
         cur.close()
+
         flash('You are registered and can log in', 'Success!')
         return redirect(url_for('index'))
+    
     return render_template('register.html', form=form, RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY"))
     
 # User Login
@@ -156,17 +161,22 @@ def register():
 @check_recaptcha
 def login():
     if request.method == 'POST' and request.recaptcha_is_valid:
+
         # Get Form Fields
         username = request.form['username']
         password_candidate = request.form['password']
+        
         # Create cursor
         cur = mysql.connection.cursor()
+        
         # Get user by username
         result = cur.execute("SELECT * FROM users WHERE username =%s", [username])
+
         if result > 0:
             # Get stored hash
             data = cur.fetchone()
             password = data['password']
+
             # Compare Passwords
             if sha256_crypt.verify(password_candidate, password):
                 session['logged_in'] = True
@@ -176,11 +186,13 @@ def login():
             else:
                 error = 'Invalid Password'
                 return render_template('login.html', error=error)
+
             # Close Connection
             cur.close()
         else:
             error = 'Username is not found'
             return render_template('login.html', error=error)
+
     return render_template('login.html', RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY"))
 
 # User Login Google
@@ -188,7 +200,9 @@ def login():
 def login_google():
     if not google.authorized:
         return redirect(url_for("google.login"))
+
     resp = google.get("/oauth2/v1/userinfo")
+
     if resp.ok and resp.text:
         name = resp.json()["name"]
         email = resp.json()["email"]
@@ -198,12 +212,15 @@ def login_google():
         
         # Create cursor
         cur = mysql.connection.cursor()
+
         # Get user by email
         result = cur.execute("SELECT * FROM users WHERE email =%s AND oauth_id =%s", [email,oauth_id])
+        
         if result>0:
             # data = cur.fetchone()
             session['logged_in'] = True
             session['username'] = username
+            
             # Close connection
             cur.close()
             flash('You are now logged in via Google','success')
@@ -211,8 +228,10 @@ def login_google():
         else:
             # Execute Query
             cur.execute("INSERT INTO users(name, email, username, oauth_id) VALUES(%s, %s, %s, %s)", (name, email, username, oauth_id))
+            
             # Commit to DB
             mysql.connection.commit()
+            
             # Close connection
             cur.close()
 
@@ -235,13 +254,15 @@ def login_facebook():
         
         # Create cursor
         cur = mysql.connection.cursor()
+
         # Get user by email
         result = cur.execute("SELECT * FROM users WHERE email =%s AND oauth_id=%s", [email,oauth_id])
+        
         if result>0:
-            print "THIS WORKSSSSSSSSSSSSSSSS"
             # data = cur.fetchone()
             session['logged_in'] = True
             session['username'] = username
+            
             # Close connection
             cur.close()
             flash('You are now logged in via Facebook','success')
@@ -249,8 +270,10 @@ def login_facebook():
         else:
             # Execute Query
             cur.execute("INSERT INTO users(name, email, username, oauth_id) VALUES(%s, %s, %s, %s)", (name, email, username, oauth_id))
+            
             # Commit to DB
             mysql.connection.commit()
+            
             # Close connection
             cur.close()
 
@@ -268,6 +291,7 @@ def is_user_logged_in(f):
         else:
             flash('Unauthorized, Please login', 'danger')
             return redirect(url_for('login'))
+
     return wrap
 
 # Logout
@@ -310,6 +334,7 @@ class ArticleForm(Form):
 @is_user_logged_in
 def add_article():
     form = ArticleForm(request.form)
+
     if request.method == 'POST' and form.validate():
         title = form.title.data
         body = form.body.data
@@ -328,6 +353,7 @@ def add_article():
 
         flash('Article Created', 'success')
         return redirect(url_for('dashboard'))
+
     return render_template('add_article.html', form=form)
 
 # Edit Article
@@ -367,6 +393,7 @@ def edit_article(id):
 
         flash('Article Updated', 'success')
         return redirect(url_for('dashboard'))
+
     return render_template('edit_article.html', form=form)
 
 # Delete Article

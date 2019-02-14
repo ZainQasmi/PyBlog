@@ -1,8 +1,12 @@
-# Junk files
+# OS junk
 .DS_Store
 
-# Python bytecode
+# Bytecode
 *.pyc
 
 # API KEYS & shizz
 credentials.yaml
+
+# Editor junk
+.vscode/
+
