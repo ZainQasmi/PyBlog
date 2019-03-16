@@ -70,10 +70,10 @@ def check_recaptcha(f):
 
             if result['success']:
                 request.recaptcha_is_valid = True
-                # flash('Valid reCAPTCHA', 'success')
+                flash('Valid reCAPTCHA', 'success')
             else:
-                request.recaptcha_is_valid = True
-                # flash('Invalid reCAPTCHA. Please try again.', 'danger')
+                request.recaptcha_is_valid = False
+                flash('Invalid reCAPTCHA. Please try again.', 'danger')
 
         return f(*args, **kwargs)
 
@@ -117,6 +117,7 @@ def article(id):
 
     return render_template('article.html', article=query3[0])
 
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
@@ -153,25 +154,11 @@ def register():
         username = form.username.data
         password = sha256_crypt.encrypt(str(form.password.data))
 
-        # user_ip = request.remote_addr
-        # entity = datastore.Entity(key=ds.key('users'))
-        # entity.update({
-        # 'name': name,
-        # 'email': email,
-        # 'username': username,
-        # 'password': password,
-        # 'register_date': datetime.datetime.utcnow(),
-        # 'user_ip': user_ip
-        # })
-
-        # ds.put(entity)
-
         addUser = AddUser()
         addUser.name = name
         addUser.email = email
         addUser.username = username
         addUser.password = password
-        # addUser.register_date = datetime.datetime.utcnow()
         addUser.put()
 
         flash('You are registered and can log in', 'Success!')
@@ -189,24 +176,11 @@ def login():
         username = request.form['username']
         password_candidate = request.form['password']
 
-        # query1 = Account.query()  # Retrieve all Account entitites
-        # query2 = query1.filter(Account.userid >= 40)  # Filter on userid >= 40
-        # query3 = query2.filter(Account.userid < 50)  # Filter on userid < 50 too
-
         query1 = AddUser.query()
         query2 = query1.filter(AddUser.username == username)
         query3 = query2.fetch()
 
-        # result = {}
-        # for oneItem in query3[0]:
-        # for oneProp in oneItem:
-        # result[oneProp] = oneItem[oneProp]
-
         if len(query3) > 0:
-            # Get stored hash
-            # data = cur.fetchone()
-            # password = data['password']
-            # password = result['password']
             password = query3[0].password
 
             # Compare Passwords
@@ -325,35 +299,11 @@ def logout():
 @app.route('/dashboard')
 @is_user_logged_in
 def dashboard():
-    # query = ds.query(kind='articles')
-    # query.add_filter('author', '=', session['username'])
-
-    # query1 = AddUser.query()
-    # query2 = query1.filter(AddUser.username == username)
-    # query3 = query2.fetch()
-
-    # for oneItem in query.fetch():
-    #     result = {}
-    #     for oneProp in oneItem:
-    #         result[oneProp] = oneItem[oneProp]
-    #     articles.append(result)
 
     query3 = []
-    print "QUERY3 1 :: ", query3
     query1 = Article.query().order(Article.id)
     query2 = query1.filter(Article.author == session['username'])
     query3 = query2.fetch()
-
-    print "QUERY3 2 :: ", query3
-
-    # articles = []
-    # for entity in query3:
-    #     article = {}
-    #     article['id'] = entity.id
-    #     article['title'] = entity.title
-    #     article['author'] = entity.author
-    #     article['create_date'] = entity.create_date
-    #     articles.append(article)
 
     if len(query3) > 0:
         return render_template('dashboard.html', articles=query3)
@@ -382,8 +332,6 @@ class Article(ndb.Model):
 @is_user_logged_in
 def add_article():
     form = ArticleForm(request.form)
-
-    # key_id = COUNTER.getCount()
     key_id = ArticleCounterModel.query().fetch()
 
     if key_id == []:
