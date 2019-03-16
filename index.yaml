@@ -1,0 +1,24 @@
+indexes:
+
+- kind: AddUser
+  properties:
+  - name: name
+  - name: email
+  - name: username
+  - name: password
+  - name: oauth_id
+  - name: register_date
+
+- kind: Article
+  properties:
+  - name: author
+  - name: id
+
+- kind: Article
+  properties:
+  - name: id 
+  - name: title
+  - name: body
+  - name: author
+  - name: create_date
+

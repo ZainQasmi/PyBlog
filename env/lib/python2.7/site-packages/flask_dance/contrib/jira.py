@@ -7,6 +7,7 @@ from flask_dance.consumer import OAuth1ConsumerBlueprint
 from flask_dance.consumer.requests import OAuth1Session
 from functools import partial
 from flask.globals import LocalProxy, _lookup_app_object
+
 try:
     from flask import _app_ctx_stack as stack
 except ImportError:
@@ -23,9 +24,17 @@ class JsonOAuth1Session(OAuth1Session):
 
 
 def make_jira_blueprint(
-        base_url, consumer_key=None, rsa_key=None,
-        redirect_url=None, redirect_to=None, login_url=None, authorized_url=None,
-        session_class=None, backend=None):
+    base_url,
+    consumer_key=None,
+    rsa_key=None,
+    redirect_url=None,
+    redirect_to=None,
+    login_url=None,
+    authorized_url=None,
+    session_class=None,
+    backend=None,
+    storage=None,
+):
     """
     Make a blueprint for authenticating with JIRA using OAuth 1. This requires
     a consumer key and RSA key for the JIRA application link. You should either
@@ -53,9 +62,9 @@ def make_jira_blueprint(
         session_class (class, optional): The class to use for creating a
             Requests session. Defaults to
             :class:`~flask_dance.contrib.jira.JsonOAuth1Session`.
-        backend: A storage backend class, or an instance of a storage
-                backend class, to use for this blueprint. Defaults to
-                :class:`~flask_dance.consumer.backend.session.SessionBackend`.
+        storage: A token storage class, or an instance of a token storage
+                class, to use for this blueprint. Defaults to
+                :class:`~flask_dance.consumer.storage.session.SessionStorage`.
 
     :rtype: :class:`~flask_dance.consumer.OAuth1ConsumerBlueprint`
     :returns: A :ref:`blueprint <flask:blueprints>` to attach to your Flask app.
@@ -65,7 +74,9 @@ def make_jira_blueprint(
             rsa_key = f.read()
     base_url = URLObject(base_url)
 
-    jira_bp = OAuth1ConsumerBlueprint("jira", __name__,
+    jira_bp = OAuth1ConsumerBlueprint(
+        "jira",
+        __name__,
         client_key=consumer_key,
         rsa_key=rsa_key,
         signature_method=SIGNATURE_RSA,
@@ -79,6 +90,7 @@ def make_jira_blueprint(
         authorized_url=authorized_url,
         session_class=session_class or JsonOAuth1Session,
         backend=backend,
+        storage=storage,
     )
     jira_bp.from_config["client_key"] = "JIRA_OAUTH_CONSUMER_KEY"
     jira_bp.from_config["rsa_key"] = "JIRA_OAUTH_RSA_KEY"
@@ -89,5 +101,6 @@ def make_jira_blueprint(
         ctx.jira_oauth = jira_bp.session
 
     return jira_bp
+
 
 jira = LocalProxy(partial(_lookup_app_object, "jira_oauth"))

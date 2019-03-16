@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from flask_dance.consumer import OAuth2ConsumerBlueprint
 from functools import partial
 from flask.globals import LocalProxy, _lookup_app_object
+
 try:
     from flask import _app_ctx_stack as stack
 except ImportError:
@@ -13,11 +14,20 @@ __maintainer__ = "David Baumgold <david@davidbaumgold.com>"
 
 
 def make_dropbox_blueprint(
-        app_key=None, app_secret=None, scope=None,
-        force_reapprove=False, disable_signup=False, require_role=None,
-        redirect_url=None,
-        redirect_to=None, login_url=None, authorized_url=None,
-        session_class=None, backend=None):
+    app_key=None,
+    app_secret=None,
+    scope=None,
+    force_reapprove=False,
+    disable_signup=False,
+    require_role=None,
+    redirect_url=None,
+    redirect_to=None,
+    login_url=None,
+    authorized_url=None,
+    session_class=None,
+    backend=None,
+    storage=None,
+):
     """
     Make a blueprint for authenticating with Dropbox using OAuth 2. This requires
     a client ID and client secret from Dropbox. You should either pass them to
@@ -51,9 +61,9 @@ def make_dropbox_blueprint(
         session_class (class, optional): The class to use for creating a
             Requests session. Defaults to
             :class:`~flask_dance.consumer.requests.OAuth2Session`.
-        backend: A storage backend class, or an instance of a storage
-                backend class, to use for this blueprint. Defaults to
-                :class:`~flask_dance.consumer.backend.session.SessionBackend`.
+        storage: A token storage class, or an instance of a token storage
+                class, to use for this blueprint. Defaults to
+                :class:`~flask_dance.consumer.storage.session.SessionStorage`.
 
     :rtype: :class:`~flask_dance.consumer.OAuth2ConsumerBlueprint`
     :returns: A :ref:`blueprint <flask:blueprints>` to attach to your Flask app.
@@ -66,7 +76,9 @@ def make_dropbox_blueprint(
     if require_role:
         authorization_url_params["require_role"] = require_role
 
-    dropbox_bp = OAuth2ConsumerBlueprint("dropbox", __name__,
+    dropbox_bp = OAuth2ConsumerBlueprint(
+        "dropbox",
+        __name__,
         client_id=app_key,
         client_secret=app_secret,
         scope=scope,
@@ -80,6 +92,7 @@ def make_dropbox_blueprint(
         authorization_url_params=authorization_url_params,
         session_class=session_class,
         backend=backend,
+        storage=storage,
     )
     dropbox_bp.from_config["client_id"] = "DROPBOX_OAUTH_APP_KEY"
     dropbox_bp.from_config["client_secret"] = "DROPBOX_OAUTH_APP_SECRET"
@@ -90,5 +103,6 @@ def make_dropbox_blueprint(
         ctx.dropbox_oauth = dropbox_bp.session
 
     return dropbox_bp
+
 
 dropbox = LocalProxy(partial(_lookup_app_object, "dropbox_oauth"))

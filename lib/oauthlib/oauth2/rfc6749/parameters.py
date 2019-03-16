@@ -67,8 +67,8 @@ def prepare_grant_uri(uri, client_id, response_type, redirect_uri=None,
     .. _`Section 3.3`: https://tools.ietf.org/html/rfc6749#section-3.3
     .. _`section 10.12`: https://tools.ietf.org/html/rfc6749#section-10.12
     """
-    # if not is_secure_transport(uri):
-        # raise InsecureTransportError()
+    if not is_secure_transport(uri):
+        raise InsecureTransportError()
 
     params = [(('response_type', response_type)),
               (('client_id', client_id))]

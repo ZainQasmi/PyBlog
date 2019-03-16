@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from flask_dance.consumer import OAuth2ConsumerBlueprint
 from functools import partial
 from flask.globals import LocalProxy, _lookup_app_object
+
 try:
     from flask import _app_ctx_stack as stack
 except ImportError:
@@ -13,10 +14,18 @@ __maintainer__ = "Pieter Ennes <support@authentiq.com>"
 
 
 def make_authentiq_blueprint(
-        client_id=None, client_secret=None, scope="openid profile",
-        redirect_url=None, redirect_to=None, login_url=None,
-        authorized_url=None, session_class=None, backend=None,
-        hostname="connect.authentiq.io"):
+    client_id=None,
+    client_secret=None,
+    scope="openid profile",
+    redirect_url=None,
+    redirect_to=None,
+    login_url=None,
+    authorized_url=None,
+    session_class=None,
+    backend=None,
+    storage=None,
+    hostname="connect.authentiq.io",
+):
     """
     Make a blueprint for authenticating with authentiq using OAuth 2. This requires
     a client ID and client secret from authentiq. You should either pass them to
@@ -40,9 +49,9 @@ def make_authentiq_blueprint(
         session_class (class, optional): The class to use for creating a
             Requests session. Defaults to
             :class:`~flask_dance.consumer.requests.OAuth2Session`.
-        backend: A storage backend class, or an instance of a storage
-                backend class, to use for this blueprint. Defaults to
-                :class:`~flask_dance.consumer.backend.session.SessionBackend`.
+        storage: A token storage class, or an instance of a token storage
+                class, to use for this blueprint. Defaults to
+                :class:`~flask_dance.consumer.storage.session.SessionStorage`.
         hostname (str, optional): If using a private instance of authentiq CE/EE,
             specify the hostname, default is ``connect.authentiq.io``
 
@@ -64,6 +73,7 @@ def make_authentiq_blueprint(
         authorized_url=authorized_url,
         session_class=session_class,
         backend=backend,
+        storage=storage,
     )
     authentiq_bp.from_config["client_id"] = "AUTHENTIQ_OAUTH_CLIENT_ID"
     authentiq_bp.from_config["client_secret"] = "AUTHENTIQ_OAUTH_CLIENT_SECRET"

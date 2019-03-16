@@ -1,5 +1,6 @@
 from __future__ import unicode_literals, print_function
 
+import warnings
 from datetime import datetime, timedelta
 import six
 from lazy import lazy
@@ -7,20 +8,33 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from werkzeug.datastructures import CallbackDict
 import flask
 from flask.signals import Namespace
-from flask_dance.consumer.backend.session import SessionBackend
+from flask_dance.consumer.storage.session import SessionStorage
 from flask_dance.utils import getattrd, timestamp_from_datetime
 
 
 _signals = Namespace()
-oauth_authorized = _signals.signal('oauth-authorized')
-oauth_error = _signals.signal('oauth-error')
+oauth_authorized = _signals.signal("oauth-authorized")
+oauth_before_login = _signals.signal("oauth-before-login")
+oauth_error = _signals.signal("oauth-error")
 
 
 class BaseOAuthConsumerBlueprint(six.with_metaclass(ABCMeta, flask.Blueprint)):
-    def __init__(self, name, import_name,
-            static_folder=None, static_url_path=None, template_folder=None,
-            url_prefix=None, subdomain=None, url_defaults=None, root_path=None,
-            login_url=None, authorized_url=None, backend=None):
+    def __init__(
+        self,
+        name,
+        import_name,
+        static_folder=None,
+        static_url_path=None,
+        template_folder=None,
+        url_prefix=None,
+        subdomain=None,
+        url_defaults=None,
+        root_path=None,
+        login_url=None,
+        authorized_url=None,
+        backend=None,
+        storage=None,
+    ):
 
         bp_kwargs = dict(
             name=name,
@@ -43,9 +57,7 @@ class BaseOAuthConsumerBlueprint(six.with_metaclass(ABCMeta, flask.Blueprint)):
         authorized_url = authorized_url or "/{bp.name}/authorized"
 
         self.add_url_rule(
-            rule=login_url.format(bp=self),
-            endpoint="login",
-            view_func=self.login,
+            rule=login_url.format(bp=self), endpoint="login", view_func=self.login
         )
         self.add_url_rule(
             rule=authorized_url.format(bp=self),
@@ -53,12 +65,20 @@ class BaseOAuthConsumerBlueprint(six.with_metaclass(ABCMeta, flask.Blueprint)):
             view_func=self.authorized,
         )
 
-        if backend is None:
-            self.backend = SessionBackend()
-        elif callable(backend):
-            self.backend = backend()
+        if backend is not None:
+            warnings.warn(
+                "The `backend` parameter is deprecated. "
+                "Please use the `storage` parameter instead.",
+                DeprecationWarning,
+            )
+            storage = backend
+
+        if storage is None:
+            self.storage = SessionStorage()
+        elif callable(storage):
+            self.storage = storage()
         else:
-            self.backend = backend
+            self.storage = storage
 
         self.logged_in_funcs = []
         self.from_config = {}
@@ -92,7 +112,7 @@ class BaseOAuthConsumerBlueprint(six.with_metaclass(ABCMeta, flask.Blueprint)):
 
     @property
     def token(self):
-        _token = self.backend.get(self)
+        _token = self.storage.get(self)
         if _token and _token.get("expires_in") and _token.get("expires_at"):
             # Update the `expires_in` value, so that requests-oauthlib
             # can handle automatic token refreshing. Assume that
@@ -111,13 +131,31 @@ class BaseOAuthConsumerBlueprint(six.with_metaclass(ABCMeta, flask.Blueprint)):
             delta = timedelta(seconds=_token["expires_in"])
             expires_at = datetime.utcnow() + delta
             _token["expires_at"] = timestamp_from_datetime(expires_at)
-        self.backend.set(self, _token)
+        self.storage.set(self, _token)
         lazy.invalidate(self.session, "token")
 
     @token.deleter
     def token(self):
-        self.backend.delete(self)
+        self.storage.delete(self)
         lazy.invalidate(self.session, "token")
+
+    @property
+    def backend(self):
+        warnings.warn(
+            "The `backend` property is deprecated. "
+            "Please use the `storage` property instead.",
+            DeprecationWarning,
+        )
+        return self.storage
+
+    @backend.setter
+    def backend(self, value):
+        warnings.warn(
+            "The `backend` property is deprecated. "
+            "Please use the `storage` property instead.",
+            DeprecationWarning,
+        )
+        self.storage = value
 
     @abstractproperty
     def session(self):

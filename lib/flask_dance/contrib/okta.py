@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from flask_dance.consumer import OAuth2ConsumerBlueprint
 from functools import partial
 from flask.globals import LocalProxy, _lookup_app_object
+
 try:
     from flask import _app_ctx_stack as stack
 except ImportError:
@@ -13,9 +14,19 @@ __maintainer__ = "Tom Nolan <tomnolan95@gmail.com>"
 
 
 def make_okta_blueprint(
-        client_id=None, client_secret=None, base_url=None, scope=None, redirect_url=None,
-        token_url=None, redirect_to=None, login_url=None, authorization_url=None,
-        session_class=None, backend=None):
+    client_id=None,
+    client_secret=None,
+    base_url=None,
+    scope=None,
+    redirect_url=None,
+    token_url=None,
+    redirect_to=None,
+    login_url=None,
+    authorization_url=None,
+    session_class=None,
+    backend=None,
+    storage=None,
+):
     """
     Make a blueprint for authenticating with Okta using OAuth 2. This requires
     a client ID and client secret from OKta. You should either pass them to
@@ -38,15 +49,17 @@ def make_okta_blueprint(
         session_class (class, optional): The class to use for creating a
             Requests session. Defaults to
             :class:`~flask_dance.consumer.requests.OAuth2Session`.
-        backend: A storage backend class, or an instance of a storage
-                backend class, to use for this blueprint. Defaults to
-                :class:`~flask_dance.consumer.backend.session.SessionBackend`.
+        storage: A token storage class, or an instance of a token storage
+                class, to use for this blueprint. Defaults to
+                :class:`~flask_dance.consumer.storage.session.SessionStorage`.
 
     :rtype: :class:`~flask_dance.consumer.OAuth2ConsumerBlueprint`
     :returns: A :ref:`blueprint <flask:blueprints>` to attach to your Flask app.
     """
     scope = scope or ["openid", "email", "profile"]
-    okta_bp = OAuth2ConsumerBlueprint("okta", __name__,
+    okta_bp = OAuth2ConsumerBlueprint(
+        "okta",
+        __name__,
         client_id=client_id,
         client_secret=client_secret,
         scope=scope,
@@ -58,6 +71,7 @@ def make_okta_blueprint(
         login_url=login_url,
         session_class=session_class,
         backend=backend,
+        storage=storage,
     )
     okta_bp.from_config["client_id"] = "OKTA_OAUTH_CLIENT_ID"
     okta_bp.from_config["client_secret"] = "OKTA_OAUTH_CLIENT_SECRET"
@@ -68,5 +82,6 @@ def make_okta_blueprint(
         ctx.okta_oauth = okta_bp.session
 
     return okta_bp
+
 
 okta = LocalProxy(partial(_lookup_app_object, "okta_oauth"))

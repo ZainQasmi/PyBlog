@@ -1,45 +1,23 @@
-import six
-from abc import ABCMeta, abstractmethod
+import warnings
+from flask_dance.consumer.storage import BaseStorage as BaseBackend
+from flask_dance.consumer.storage import NullStorage, MemoryStorage
 
 
-class BaseBackend(six.with_metaclass(ABCMeta)):
-    @abstractmethod
-    def get(self, blueprint):
-        return None
-
-    @abstractmethod
-    def set(self, blueprint, token):
-        return None
-
-    @abstractmethod
-    def delete(self, blueprint):
-        return None
+class NullBackend(NullStorage):
+    def __init__(self):
+        warnings.warn(
+            "flask_dance.consumer.backend.NullBackend is deprecated. "
+            "Please use flask_dance.consumer.storage.NullStorage instead.",
+            DeprecationWarning,
+        )
+        super(NullBackend, self).__init__()
 
 
-class NullBackend(BaseBackend):
-    """
-    Don't actually store anything
-    """
-    def get(self, blueprint):
-        return None
-    def set(self, blueprint, token):
-        return None
-    def delete(self, blueprint):
-        return None
-
-
-class MemoryBackend(BaseBackend):
-    """
-    "Store" the token in memory
-    """
+class MemoryBackend(MemoryStorage):
     def __init__(self, token=None, *args, **kwargs):
-        self.token = token
-
-    def get(self, blueprint):
-        return self.token
-
-    def set(self, blueprint, token):
-        self.token = token
-
-    def delete(self, blueprint):
-        self.token = None
+        warnings.warn(
+            "flask_dance.consumer.backend.MemoryBackend is deprecated. "
+            "Please use flask_dance.consumer.storage.MemoryStorage instead.",
+            DeprecationWarning,
+        )
+        super(MemoryBackend, self).__init__(token, *args, **kwargs)

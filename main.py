@@ -1,7 +1,7 @@
-import os, requests
+import os
+import requests
 
 from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
-from flask_mysqldb import MySQL
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
@@ -12,36 +12,43 @@ from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
 from raven.contrib.flask import Sentry
 from requests_toolbelt.adapters import appengine
 
+import datetime
+import os
+from google.appengine.ext import ndb
 
 # Init App
 appengine.monkeypatch()
 app = Flask(__name__)
+
+# os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="credentials.json"
+app.config["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials.json"
+
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
 app.wsgi_app = ProxyFix(app.wsgi_app)
-app.config['OAUTHLIB_INSECURE_TRANSPORT'] = os.environ.get("OAUTHLIB_INSECURE_TRANSPORT")
-app.config['OAUTHLIB_RELAX_TOKEN_SCOPE'] = os.environ.get("OAUTHLIB_RELAX_TOKEN_SCOPE")
+app.config['OAUTHLIB_INSECURE_TRANSPORT'] = os.environ.get(
+    "OAUTHLIB_INSECURE_TRANSPORT")
+app.config['OAUTHLIB_RELAX_TOKEN_SCOPE'] = os.environ.get(
+    "OAUTHLIB_RELAX_TOKEN_SCOPE")
 
 # Config Google OAuth
 app.config["GOOGLE_OAUTH_CLIENT_ID"] = os.environ.get("GOOGLE_OAUTH_CLIENT_ID")
-app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET")
-google_bp = make_google_blueprint(scope=['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'])
+app.config["GOOGLE_OAUTH_CLIENT_SECRET"] = os.environ.get(
+    "GOOGLE_OAUTH_CLIENT_SECRET")
+google_bp = make_google_blueprint(
+    scope=['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'])
 app.register_blueprint(google_bp, url_prefix="/login")
 
 # Config Facebook OAuth
-app.config["FACEBOOK_OAUTH_CLIENT_ID"] = os.environ.get("FACEBOOK_OAUTH_CLIENT_ID")
-app.config["FACEBOOK_OAUTH_CLIENT_SECRET"] = os.environ.get("FACEBOOK_OAUTH_CLIENT_SECRET")
-facebook_bp = make_facebook_blueprint(scope=['email'],rerequest_declined_permissions=True)
+app.config["FACEBOOK_OAUTH_CLIENT_ID"] = os.environ.get(
+    "FACEBOOK_OAUTH_CLIENT_ID")
+app.config["FACEBOOK_OAUTH_CLIENT_SECRET"] = os.environ.get(
+    "FACEBOOK_OAUTH_CLIENT_SECRET")
+facebook_bp = make_facebook_blueprint(
+    scope=['email'], rerequest_declined_permissions=True)
 app.register_blueprint(facebook_bp, url_prefix="/login")
 
-# Config MySQL
-app.config['MYSQL_UNIX_SOCKET'] = os.environ.get("MYSQL_UNIX_SOCKET")
-app.config['MYSQL_USER'] = os.environ.get("MYSQL_USER")
-app.config['MYSQL_PASSWORD'] = os.environ.get("MYSQL_PASSWORD")
-app.config['MYSQL_DB'] = os.environ.get("MYSQL_DB")
-app.config['MYSQL_CURSORCLASS'] = os.environ.get("MYSQL_CURSORCLASS")
-# app.config['MYSQL_HOST'] = os.environ.get("MYSQL_HOST")
-
-mysql = MySQL(app)
+# init Datastore
+# ds = datastore.Client()
 
 # Google Recaptcha
 def check_recaptcha(f):
@@ -65,8 +72,8 @@ def check_recaptcha(f):
                 request.recaptcha_is_valid = True
                 # flash('Valid reCAPTCHA', 'success')
             else:
-                request.recaptcha_is_valid = False
-                flash('Invalid reCAPTCHA. Please try again.', 'danger')
+                request.recaptcha_is_valid = True
+                # flash('Invalid reCAPTCHA. Please try again.', 'danger')
 
         return f(*args, **kwargs)
 
@@ -85,32 +92,30 @@ def about():
 # Articles
 @app.route('/articles')
 def articles():
-    # Create Cursor
-    cur = mysql.connection.cursor()
+    query1 = Article.query().order(Article.id)
+    query3 = query1.fetch()
 
-    # Get Articles
-    result = cur.execute("SELECT * FROM articles")
-    articles = cur.fetchall()
-    
-    # Close Connections
-    cur.close() 
+    articles = []
+    for entity in query3:
+        article = {}
+        article['id'] = entity.id
+        article['title'] = entity.title
+        articles.append(article)
 
-    if result > 0:
+    if len(query3) > 0:
         return render_template('articles.html', articles=articles)
     else:
         msg = "No articles found"
         return render_template('articles.html', msg=msg)
-    
+
 # Single Article
 @app.route('/article/<string:id>/')
 def article(id):
-    # Create Cursor
-    cur = mysql.connection.cursor()
+    query1 = Article.query()
+    query2 = query1.filter(Article.id == int(id))
+    query3 = query2.fetch()
 
-    # Get Articles
-    result = cur.execute("SELECT * FROM articles WHERE id=%s",[id])
-    article = cur.fetchone()
-    return render_template('article.html', article=article)
+    return render_template('article.html', article=query3[0])
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -118,17 +123,26 @@ def page_not_found(e):
 
 # Register Form Class
 class RegisterForm(Form):
-    name = StringField('Name', [validators.Length(min=1,max=50)])
-    username = StringField('Username', [validators.Length(min=4,max=25)])
-    email = StringField('Email', [validators.Length(min=6,max=50)])
+    name = StringField('Name', [validators.Length(min=1, max=50)])
+    username = StringField('Username', [validators.Length(min=4, max=25)])
+    email = StringField('Email', [validators.Length(min=6, max=50)])
     password = PasswordField('Password', [
-        validators.DataRequired(), 
+        validators.DataRequired(),
         validators.EqualTo('confirm', message='Passwords do not match')
     ])
     confirm = PasswordField('Confirm Password')
 
+# Add User Model
+class AddUser(ndb.Model):
+    name = ndb.StringProperty()
+    email = ndb.StringProperty()
+    username = ndb.StringProperty()
+    password = ndb.StringProperty()
+    oauth_id = ndb.StringProperty()
+    register_date = ndb.DateTimeProperty(auto_now_add=True)
+
 # User Register
-@app.route('/register', methods=['GET','POST'])
+@app.route('/register', methods=['GET', 'POST'])
 @check_recaptcha
 def register():
     form = RegisterForm(request.form)
@@ -139,23 +153,32 @@ def register():
         username = form.username.data
         password = sha256_crypt.encrypt(str(form.password.data))
 
-        # Create cursor
-        cur = mysql.connection.cursor()
-        
-        # Execute Query
-        cur.execute("INSERT INTO users(name, email, username, password) VALUES(%s, %s, %s, %s)", (name, email, username, password))
-        
-        # Commit to DB
-        mysql.connection.commit()
-        
-        # Close connection
-        cur.close()
+        # user_ip = request.remote_addr
+        # entity = datastore.Entity(key=ds.key('users'))
+        # entity.update({
+        # 'name': name,
+        # 'email': email,
+        # 'username': username,
+        # 'password': password,
+        # 'register_date': datetime.datetime.utcnow(),
+        # 'user_ip': user_ip
+        # })
+
+        # ds.put(entity)
+
+        addUser = AddUser()
+        addUser.name = name
+        addUser.email = email
+        addUser.username = username
+        addUser.password = password
+        # addUser.register_date = datetime.datetime.utcnow()
+        addUser.put()
 
         flash('You are registered and can log in', 'Success!')
         return redirect(url_for('index'))
-    
-    return render_template('register.html', form=form, RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY"))
-    
+
+    return render_template('register.html', form=form, RECAPTCHA_SITE_KEY=os.environ.get("RECAPTCHA_SITE_KEY"))
+
 # User Login
 @app.route('/login', methods=['GET', 'POST'])
 @check_recaptcha
@@ -165,35 +188,42 @@ def login():
         # Get Form Fields
         username = request.form['username']
         password_candidate = request.form['password']
-        
-        # Create cursor
-        cur = mysql.connection.cursor()
-        
-        # Get user by username
-        result = cur.execute("SELECT * FROM users WHERE username =%s", [username])
 
-        if result > 0:
+        # query1 = Account.query()  # Retrieve all Account entitites
+        # query2 = query1.filter(Account.userid >= 40)  # Filter on userid >= 40
+        # query3 = query2.filter(Account.userid < 50)  # Filter on userid < 50 too
+
+        query1 = AddUser.query()
+        query2 = query1.filter(AddUser.username == username)
+        query3 = query2.fetch()
+
+        # result = {}
+        # for oneItem in query3[0]:
+        # for oneProp in oneItem:
+        # result[oneProp] = oneItem[oneProp]
+
+        if len(query3) > 0:
             # Get stored hash
-            data = cur.fetchone()
-            password = data['password']
+            # data = cur.fetchone()
+            # password = data['password']
+            # password = result['password']
+            password = query3[0].password
 
             # Compare Passwords
             if sha256_crypt.verify(password_candidate, password):
                 session['logged_in'] = True
                 session['username'] = username
-                flash('You are now logged in','success')
+                flash('You are now logged in', 'success')
                 return redirect(url_for('dashboard'))
             else:
                 error = 'Invalid Password'
                 return render_template('login.html', error=error)
 
-            # Close Connection
-            cur.close()
         else:
             error = 'Username is not found'
             return render_template('login.html', error=error)
 
-    return render_template('login.html', RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY"))
+    return render_template('login.html', RECAPTCHA_SITE_KEY=os.environ.get("RECAPTCHA_SITE_KEY"))
 
 # User Login Google
 @app.route('/login_google', methods=['GET', 'POST'])
@@ -209,35 +239,29 @@ def login_google():
         username = resp.json()["given_name"]
         oauth_id = resp.json()["id"]
         print resp.json()
-        
-        # Create cursor
-        cur = mysql.connection.cursor()
 
-        # Get user by email
-        result = cur.execute("SELECT * FROM users WHERE email =%s AND oauth_id =%s", [email,oauth_id])
-        
-        if result>0:
-            # data = cur.fetchone()
+        query1 = AddUser.query()
+        query2 = query1.filter(AddUser.username == username)
+        query3 = query2.fetch()
+
+        if len(query3) > 0:
             session['logged_in'] = True
             session['username'] = username
-            
-            # Close connection
-            cur.close()
-            flash('You are now logged in via Google','success')
+
+            flash('You are now logged in via Google', 'success')
             return redirect(url_for('dashboard'))
         else:
-            # Execute Query
-            cur.execute("INSERT INTO users(name, email, username, oauth_id) VALUES(%s, %s, %s, %s)", (name, email, username, oauth_id))
-            
-            # Commit to DB
-            mysql.connection.commit()
-            
-            # Close connection
-            cur.close()
+
+            addUser = AddUser()
+            addUser.name = name
+            addUser.email = email
+            addUser.username = username
+            addUser.oauth_id = oauth_id
+            addUser.put()
 
             session['logged_in'] = True
             session['username'] = username
-            flash('Successfully registered via Google','success')
+            flash('Successfully registered via Google', 'success')
             return redirect(url_for('dashboard'))
 
 # User Login Facebook
@@ -246,40 +270,35 @@ def login_facebook():
     if not facebook.authorized:
         return redirect(url_for("facebook.login"))
     resp = facebook.get("me?fields=id,name,email,first_name,short_name")
+
     if resp.ok:
         name = resp.json()["name"]
         email = resp.json()["email"]
         username = resp.json()["short_name"]
         oauth_id = resp.json()["id"]
-        
-        # Create cursor
-        cur = mysql.connection.cursor()
 
-        # Get user by email
-        result = cur.execute("SELECT * FROM users WHERE email =%s AND oauth_id=%s", [email,oauth_id])
-        
-        if result>0:
-            # data = cur.fetchone()
+        query1 = AddUser.query()
+        query2 = query1.filter(AddUser.username == username)
+        query3 = query2.fetch()
+
+        if len(query3) > 0:
             session['logged_in'] = True
             session['username'] = username
-            
-            # Close connection
-            cur.close()
-            flash('You are now logged in via Facebook','success')
+
+            flash('You are now logged in via Facebook', 'success')
             return redirect(url_for('dashboard'))
         else:
-            # Execute Query
-            cur.execute("INSERT INTO users(name, email, username, oauth_id) VALUES(%s, %s, %s, %s)", (name, email, username, oauth_id))
-            
-            # Commit to DB
-            mysql.connection.commit()
-            
-            # Close connection
-            cur.close()
+
+            addUser = AddUser()
+            addUser.name = name
+            addUser.email = email
+            addUser.username = username
+            addUser.oauth_id = oauth_id
+            addUser.put()
 
             session['logged_in'] = True
             session['username'] = username
-            flash('Successfully registered via Facebook','success')
+            flash('Successfully registered via Facebook', 'success')
             return redirect(url_for('dashboard'))
 
 # Check if user logged in
@@ -299,57 +318,92 @@ def is_user_logged_in(f):
 # @is_user_logged_in
 def logout():
     session.clear()
-    flash('You are now logged out','success')
+    flash('You are now logged out', 'success')
     return redirect(url_for('login'))
 
 # Dashboard
 @app.route('/dashboard')
 @is_user_logged_in
 def dashboard():
-    # Create Cursor
-    cur = mysql.connection.cursor()
+    # query = ds.query(kind='articles')
+    # query.add_filter('author', '=', session['username'])
 
-    # Get Articles
-    result = cur.execute("SELECT * FROM articles WHERE author = %s", [session['username']])
-    # result = cur.execute("SELECT * FROM articles")
-    
-    articles = cur.fetchall()
+    # query1 = AddUser.query()
+    # query2 = query1.filter(AddUser.username == username)
+    # query3 = query2.fetch()
 
-    # Close Connections
-    cur.close()
-    
-    if result>0:
-        return render_template('dashboard.html', articles=articles)
+    # for oneItem in query.fetch():
+    #     result = {}
+    #     for oneProp in oneItem:
+    #         result[oneProp] = oneItem[oneProp]
+    #     articles.append(result)
+
+    query3 = []
+    print "QUERY3 1 :: ", query3
+    query1 = Article.query().order(Article.id)
+    query2 = query1.filter(Article.author == session['username'])
+    query3 = query2.fetch()
+
+    print "QUERY3 2 :: ", query3
+
+    # articles = []
+    # for entity in query3:
+    #     article = {}
+    #     article['id'] = entity.id
+    #     article['title'] = entity.title
+    #     article['author'] = entity.author
+    #     article['create_date'] = entity.create_date
+    #     articles.append(article)
+
+    if len(query3) > 0:
+        return render_template('dashboard.html', articles=query3)
+        # return render_template('dashboard.html', articles=articles)
     else:
         msg = "No articles found"
         return render_template('dashboard.html', msg=msg)
-    
+
 # Article Form Class
 class ArticleForm(Form):
     title = StringField('Title', [validators.Length(min=1, max=280)])
     body = TextAreaField('Body', [validators.Length(min=30)])
 
+class ArticleCounterModel(ndb.Model):
+    count = ndb.IntegerProperty(default=1)
+
+class Article(ndb.Model):
+    id = ndb.IntegerProperty()
+    title = ndb.StringProperty()
+    body = ndb.StringProperty()
+    author = ndb.StringProperty()
+    create_date = ndb.DateTimeProperty(auto_now_add=True)
+
 # Add Article
-@app.route('/add_article', methods=['GET','POST'])
+@app.route('/add_article', methods=['GET', 'POST'])
 @is_user_logged_in
 def add_article():
     form = ArticleForm(request.form)
+
+    # key_id = COUNTER.getCount()
+    key_id = ArticleCounterModel.query().fetch()
+
+    if key_id == []:
+        newCounter = ArticleCounterModel()
+        newCounter.put()
+        key_id = ArticleCounterModel.query().fetch()
 
     if request.method == 'POST' and form.validate():
         title = form.title.data
         body = form.body.data
 
-        # Create Cursor
-        cur = mysql.connection.cursor()
+        addArticle = Article()
+        addArticle.id = key_id[0].count
+        addArticle.title = title
+        addArticle.body = body
+        addArticle.author = session['username']
+        addArticle.put()
 
-        # Execute Query
-        cur.execute("INSERT INTO articles(title, body, author) VALUES(%s, %s, %s)", (title, body, session['username']))
-
-        # Commit to DB
-        mysql.connection.commit()
-
-        # Close connection
-        cur.close()
+        key_id[0].count += 1
+        key_id[0].put()
 
         flash('Article Created', 'success')
         return redirect(url_for('dashboard'))
@@ -360,36 +414,25 @@ def add_article():
 @app.route('/edit_article/<string:id>/', methods=['GET', 'POST'])
 @is_user_logged_in
 def edit_article(id):
-    # Create Cursor
-    cur = mysql.connection.cursor()
-
-    # Get article by id
-    result = cur.execute("SELECT * FROM articles WHERE id=%s",[id])
-
-    article = cur.fetchone()
-
     # Get form
     form = ArticleForm(request.form)
 
+    query1 = Article.query()
+    query2 = query1.filter(Article.author == session['username'])
+    query3 = query1.filter(Article.id == int(id))
+    query4 = query3.fetch()
+
     # Populate article form fields
-    form.title.data = article['title']
-    form.body.data = article['body']
+    form.title.data = query4[0].title
+    form.body.data = query4[0].body
 
     if request.method == 'POST' and form.validate():
         title = request.form['title']
         body = request.form['body']
 
-        # Create Cursor
-        cur = mysql.connection.cursor()
-
-        # Execute Query
-        cur.execute("UPDATE articles SET title=%s, body=%s WHERE id=%s", (title,body,id))
-
-        # Commit to DB
-        mysql.connection.commit()
-
-        # Close connection
-        cur.close()
+        query4[0].title = request.form['title']
+        query4[0].body = request.form['body']
+        query4[0].put()
 
         flash('Article Updated', 'success')
         return redirect(url_for('dashboard'))
@@ -400,17 +443,17 @@ def edit_article(id):
 @app.route('/delete_article/<string:id>/', methods=['POST'])
 @is_user_logged_in
 def delete_article(id):
-    # Create Cursor
-    cur = mysql.connection.cursor()
 
-    # Execute
-    cur.execute("DELETE FROM articles WHERE id=%s", [id])
+    query1 = Article.query()
+    query2 = query1.filter(Article.author == session['username'])
+    query3 = query1.filter(Article.id == int(id))
+    query4 = query3.fetch()
+    print query4[0].id == int(id)
+    query4[0].key.delete()
 
-    # Commit to DB
-    mysql.connection.commit()
-
-    # Close connection
-    cur.close()
+    # key_id = ArticleCounterModel.query().fetch()
+    # key_id[0].count -= 1
+    # key_id[0].put()
 
     flash('Article Deleted', 'success')
     return redirect(url_for('dashboard'))

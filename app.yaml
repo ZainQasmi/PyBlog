@@ -16,8 +16,8 @@ handlers:
   script: main.app
 # [END handlers]
 
-beta_settings:
-  cloud_sql_instances: dot-operating-authority:us-west2:dot-operating-instance
+# beta_settings:
+  # cloud_sql_instances: dot-operating-authority:us-west2:dot-operating-instance
   # cloud_sql_instances: lookingbus-alpha:us-west2:sql-instance-alpha
 
 env_variables:
@@ -28,4 +28,6 @@ env_variables:
 includes:
 - credentials.yaml
 
+builtins:
+- remote_api: on
   

@@ -27,13 +27,24 @@ class RedditOAuth2Session(OAuth2Session):
     def fetch_token(self, *args, **kwargs):
         # Pass client_id to session so it could trigger Basic Auth
         return super(RedditOAuth2Session, self).fetch_token(
-            client_id=self.blueprint.client_id, *args, **kwargs)
+            client_id=self.blueprint.client_id, *args, **kwargs
+        )
 
 
 def make_reddit_blueprint(
-        client_id=None, client_secret=None, scope="identity", permanent=False,
-        redirect_url=None, redirect_to=None, login_url=None, authorized_url=None,
-        session_class=None, backend=None, user_agent=None):
+    client_id=None,
+    client_secret=None,
+    scope="identity",
+    permanent=False,
+    redirect_url=None,
+    redirect_to=None,
+    login_url=None,
+    authorized_url=None,
+    session_class=None,
+    backend=None,
+    storage=None,
+    user_agent=None,
+):
     """
     Make a blueprint for authenticating with Reddit using OAuth 2. This requires
     a client ID and client secret from Reddit. You should either pass them to
@@ -59,9 +70,9 @@ def make_reddit_blueprint(
         session_class (class, optional): The class to use for creating a
             Requests session. Defaults to
             :class:`~flask_dance.contrib.reddit.RedditOAuth2Session`.
-        backend: A storage backend class, or an instance of a storage
-            backend class, to use for this blueprint. Defaults to
-            :class:`~flask_dance.consumer.backend.session.SessionBackend`.
+        storage: A token storage class, or an instance of a token storage
+            class, to use for this blueprint. Defaults to
+            :class:`~flask_dance.consumer.storage.session.SessionStorage`.
         user_agent (str, optional): User agent for the requests to Reddit API.
             Defaults to ``Flask-Dance/{{version}}``
 
@@ -88,7 +99,9 @@ def make_reddit_blueprint(
         login_url=login_url,
         authorized_url=authorized_url,
         session_class=session_class or RedditOAuth2Session,
-        backend=backend)
+        backend=backend,
+        storage=storage,
+    )
 
     reddit_bp.from_config["client_id"] = "REDDIT_OAUTH_CLIENT_ID"
     reddit_bp.from_config["client_secret"] = "REDDIT_OAUTH_CLIENT_SECRET"

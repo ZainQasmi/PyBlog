@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from flask_dance.consumer import OAuth2ConsumerBlueprint
 from functools import partial
 from flask.globals import LocalProxy, _lookup_app_object
+
 try:
     from flask import _app_ctx_stack as stack
 except ImportError:
@@ -13,10 +14,17 @@ __maintainer__ = "David Baumgold <david@davidbaumgold.com>"
 
 
 def make_meetup_blueprint(
-        key=None, secret=None, scope=None,
-        redirect_url=None, redirect_to=None,
-        login_url=None, authorized_url=None,
-        session_class=None, backend=None):
+    key=None,
+    secret=None,
+    scope=None,
+    redirect_url=None,
+    redirect_to=None,
+    login_url=None,
+    authorized_url=None,
+    session_class=None,
+    backend=None,
+    storage=None,
+):
     """
     Make a blueprint for authenticating with Meetup using OAuth 2. This requires
     an OAuth consumer from Meetup. You should either pass the key and secret to
@@ -39,15 +47,17 @@ def make_meetup_blueprint(
         session_class (class, optional): The class to use for creating a
             Requests session. Defaults to
             :class:`~flask_dance.consumer.requests.OAuth2Session`.
-        backend: A storage backend class, or an instance of a storage
-                backend class, to use for this blueprint. Defaults to
-                :class:`~flask_dance.consumer.backend.session.SessionBackend`.
+        storage: A token storage class, or an instance of a token storage
+                class, to use for this blueprint. Defaults to
+                :class:`~flask_dance.consumer.storage.session.SessionStorage`.
 
     :rtype: :class:`~flask_dance.consumer.OAuth2ConsumerBlueprint`
     :returns: A :ref:`blueprint <flask:blueprints>` to attach to your Flask app.
     """
     scope = scope or ["basic"]
-    meetup_bp = OAuth2ConsumerBlueprint("meetup", __name__,
+    meetup_bp = OAuth2ConsumerBlueprint(
+        "meetup",
+        __name__,
         client_id=key,
         client_secret=secret,
         scope=scope,
@@ -60,6 +70,7 @@ def make_meetup_blueprint(
         authorized_url=authorized_url,
         session_class=session_class,
         backend=backend,
+        storage=storage,
     )
     meetup_bp.from_config["client_id"] = "MEETUP_OAUTH_KEY"
     meetup_bp.from_config["client_secret"] = "MEETUP_OAUTH_SECRET"
@@ -70,5 +81,6 @@ def make_meetup_blueprint(
         ctx.meetup_oauth = meetup_bp.session
 
     return meetup_bp
+
 
 meetup = LocalProxy(partial(_lookup_app_object, "meetup_oauth"))

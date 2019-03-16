@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from flask_dance.consumer import OAuth1ConsumerBlueprint
 from functools import partial
 from flask.globals import LocalProxy, _lookup_app_object
+
 try:
     from flask import _app_ctx_stack as stack
 except ImportError:
@@ -13,9 +14,16 @@ __maintainer__ = "David Baumgold <david@davidbaumgold.com>"
 
 
 def make_twitter_blueprint(
-        api_key=None, api_secret=None,
-        redirect_url=None, redirect_to=None, login_url=None, authorized_url=None,
-        session_class=None, backend=None):
+    api_key=None,
+    api_secret=None,
+    redirect_url=None,
+    redirect_to=None,
+    login_url=None,
+    authorized_url=None,
+    session_class=None,
+    backend=None,
+    storage=None,
+):
     """
     Make a blueprint for authenticating with Twitter using OAuth 1. This requires
     an API key and API secret from Twitter. You should either pass them to
@@ -37,14 +45,16 @@ def make_twitter_blueprint(
         session_class (class, optional): The class to use for creating a
             Requests session. Defaults to
             :class:`~flask_dance.consumer.requests.OAuth1Session`.
-        backend: A storage backend class, or an instance of a storage
-                backend class, to use for this blueprint. Defaults to
-                :class:`~flask_dance.consumer.backend.session.SessionBackend`.
+        storage: A token storage class, or an instance of a token storage
+                class, to use for this blueprint. Defaults to
+                :class:`~flask_dance.consumer.storage.session.SessionStorage`.
 
     :rtype: :class:`~flask_dance.consumer.OAuth1ConsumerBlueprint`
     :returns: A :ref:`blueprint <flask:blueprints>` to attach to your Flask app.
     """
-    twitter_bp = OAuth1ConsumerBlueprint("twitter", __name__,
+    twitter_bp = OAuth1ConsumerBlueprint(
+        "twitter",
+        __name__,
         client_key=api_key,
         client_secret=api_secret,
         base_url="https://api.twitter.com/1.1/",
@@ -57,6 +67,7 @@ def make_twitter_blueprint(
         authorized_url=authorized_url,
         session_class=session_class,
         backend=backend,
+        storage=storage,
     )
     twitter_bp.from_config["client_key"] = "TWITTER_OAUTH_API_KEY"
     twitter_bp.from_config["client_secret"] = "TWITTER_OAUTH_API_SECRET"
@@ -67,5 +78,6 @@ def make_twitter_blueprint(
         ctx.twitter_oauth = twitter_bp.session
 
     return twitter_bp
+
 
 twitter = LocalProxy(partial(_lookup_app_object, "twitter_oauth"))

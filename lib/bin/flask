@@ -1,5 +1,4 @@
-#!/usr/local/opt/python@2/bin/python2.7
-
+#!/Users/mzq/Desktop/Python-Flask/env/bin/python2.7
 # -*- coding: utf-8 -*-
 import re
 import sys
