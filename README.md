@@ -4,7 +4,8 @@ Beacuse life is short, use Python
 
 ### Try it out at
 
-https://lookingbus-alpha.appspot.com/
+http://cloud-datastore-alpha.appspot.com/ [Cloud Datastore]
+https://lookingbus-alpha.appspot.com/ [Cloud SQL]
 
 ### Prerequisites
 
