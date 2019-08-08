@@ -2,6 +2,9 @@
 
 Beacuse life is short, use Python
 
+### Complete Tutorial
+* [Build and deploy a Python Flask application on Google Cloud using App Engine and Cloud SQL](https://medium.com/@zainqasmi/build-and-deploy-a-python-flask-application-on-google-cloud-using-app-engine-and-cloud-sql-a3c5bde5ef4a)
+
 ### Try it out at
 
 http://cloud-datastore-alpha.appspot.com/ [Cloud Datastore]
